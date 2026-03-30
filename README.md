@@ -18,6 +18,7 @@
 | 文件 | 用途 |
 |------|------|
 | `ksu_oneclick.bat` | **一键脚本** — Windows 端运行，自动完成 KernelSU 加载全流程 |
+| `ksu_oneclick.sh` | **一键脚本** — Linux 端运行，自动完成 KernelSU 加载全流程 |
 | `patch_ksu_module.py` | Python 补丁工具 — 读取运行时 kallsyms，修补 .ko 中的 SHN_UNDEF 符号 |
 | `android15-6.6_kernelsu.ko` | KernelSU 内核模块原件 (需补丁后才能加载) |
 | `kernelsu_patched.ko` | 补丁后的内核模块 (上次运行 oneclick 的产物，可直接使用) |
@@ -33,8 +34,15 @@
 
 ### 第一步: KernelSU 加载 (每次开机后运行)
 
+Windows:
 ```
 ksu_oneclick.bat
+```
+
+Linux:
+```bash
+chmod +x ksu_oneclick.sh
+./ksu_oneclick.sh
 ```
 
 自动完成以下 5 步:
@@ -62,6 +70,14 @@ adb pull /data/local/tmp/lspd_fix_out.txt
 type lspd_fix_out.txt
 ```
 
+Linux 可将最后两步替换为:
+```bash
+adb shell "service call miui.mqsas.IMQSNative 21 i32 1 s16 'sh' i32 1 s16 '/data/local/tmp/do_chmod.sh' s16 '/dev/null' i32 5"
+sleep 3
+adb pull /data/local/tmp/lspd_fix_out.txt
+cat lspd_fix_out.txt
+```
+
 该脚本完成以下工作:
 1. 杀掉旧 lspd 进程
 2. 从 zygote64 进程获取 `BOOTCLASSPATH` 环境变量
@@ -77,6 +93,7 @@ type lspd_fix_out.txt
 ```
 ┌─ PC 端 ──────────────────────────────────────────────────────────┐
 │  ksu_oneclick.bat                                                │
+│  ksu_oneclick.sh                                                 │
 │    ├─ adb push 脚本和文件                                         │
 │    ├─ mqsas root → ksu_step1.sh → 拉取 kallsyms                  │
 │    ├─ patch_ksu_module.py → 补丁 .ko KASLR 符号                   │
@@ -128,7 +145,7 @@ type lspd_fix_out.txt
 
 ## 注意事项
 
-- ⚠️ 每次**重启手机**后需要重新运行 `ksu_oneclick.bat`，然后按需运行 `fix_lspd.sh`
+- ⚠️ 每次**重启手机**后需要重新运行 `ksu_oneclick.bat` 或 `ksu_oneclick.sh`，然后按需运行 `fix_lspd.sh`
 - ⚠️ 本方案仅在 SELinux permissive 下测试
 - ⚠️ mqsas 漏洞可能在后续系统更新中被修复
 - ⚠️ 勿在生产环境使用，仅用于安全研究用途
